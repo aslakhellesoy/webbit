@@ -1,6 +1,8 @@
 0.1.2 (In Git)
 ==================
 
+* Added HttpRequest.queryParam(String key) and HttpRequest.queryParams(String key) (#20 Aslak Hellesøy)
+* Added new AliasHandler for forwarding requests. (Aslak Hellesøy)
 * Made it possible to call NettyHttpResponse.content() more than once. (Aslak Hellesøy)
 * Added support for cookies. (#19 Aslak Hellesøy)
 * Added HttpRequest.body() method. (Aslak Hellesøy)

@@ -20,6 +20,12 @@ public interface HttpRequest extends DataHolder {
     String uri();
 
     /**
+     * Modify uri
+     * @param uri new uri
+     */
+    HttpRequest uri(String uri);
+
+    /**
      * Retrieve the value single HTTP header.
      *
      * If the header is not found, null is returned.
@@ -51,6 +57,24 @@ public interface HttpRequest extends DataHolder {
      * @return cookie with that name
      */
     HttpCookie cookie(String name);
+
+    /**
+     * Get query parameter value.
+     *
+     * @param key parameter name
+     * @return the value of the parameter
+     * @see {@link #queryParams(String)}
+     */
+    String queryParam(String key);
+
+    /**
+     * Get all query parameter values.
+     *
+     * @param key parameter name
+     * @return the values of the parameter
+     * @see {@link #queryParam(String)}
+     */
+    List<String> queryParams(String key);
 
     /**
      * Get the value of named cookie
