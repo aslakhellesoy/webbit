@@ -8,6 +8,8 @@ import org.webbitserver.handler.EmbeddedResourceHandler;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
@@ -18,17 +20,26 @@ public class Main {
         private List<CometConnection> connections = new ArrayList<CometConnection>();
         private int count = 1;
 
+        public Pusher(final Executor webThread) throws InterruptedException {
+            Executor pusherThread = newSingleThreadExecutor();
+            pusherThread.execute(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        webThread.execute(Pusher.this);
+                        try {
+                            sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+        }
+
         @Override
         public void run() {
-            while (true) {
-                try {
-                    broadcast(new Date().toString());
-                    sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                    break;
-                }
-            }
+            broadcast(new Date().toString());
         }
 
         private void broadcast(String message) {
@@ -50,10 +61,9 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        final Pusher pusher = new Pusher();
-        newSingleThreadExecutor().execute(pusher);
-
-        WebServer webServer = createWebServer(9876)
+        Executor webThread = newSingleThreadExecutor();
+        final Pusher pusher = new Pusher(webThread);
+        WebServer webServer = createWebServer(webThread, 9876)
                 .add("/events", new CometHandler() {
                     @Override
                     public void onOpen(CometConnection connection) throws Exception {
