@@ -15,6 +15,7 @@
 package com.paperculture.mongrel2;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +84,12 @@ public final class Handler {
      * 
      * Format: UUID ID PATH SIZE:HEADERS,SIZE:BODY,
      */
-    static Request parse(byte[] msg, boolean forceJson) {
+    public static Request parse(byte[] msg, boolean forceJson) {
+        try {
+            System.out.println("msg = " + new String(msg, "US-ASCII"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
       String sender, connId, path, headers;
       sender = connId = path = headers = null; 
       int headerSizeOffset = 0;
@@ -104,6 +110,7 @@ public final class Handler {
           if (headers == null) {
             final int[] offsetAndLen = offsetAndLength(msg, headerSizeOffset, i);
             headers = new String(msg, offsetAndLen[0], offsetAndLen[1], ASCII);
+              System.out.println("headers = " + headers);
             bodySizeOffset = (offsetAndLen[0] + offsetAndLen[1]) + 1;
           } else {
             final int[] offsetAndLen = offsetAndLength(msg, bodySizeOffset, i);
