@@ -28,19 +28,14 @@
         <repository>
             <id>repository.jboss.org</id>
             <url>http://repository.jboss.org/nexus/content/groups/public/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
         <repository>
             <id>gson</id>
             <url>http://google-gson.googlecode.com/svn/mavenrepo</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
+        </repository>
+        <repository>
+            <id>repository.codehaus.org</id>
+            <url>http://repository.codehaus.org/</url>
         </repository>
     </repositories>
     <dependencies>
@@ -57,9 +52,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20090211</version>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.7.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

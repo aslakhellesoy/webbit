@@ -1,74 +1,138 @@
 package org.webbitserver.mongrel2;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.webbitserver.HttpRequest;
+import org.webbitserver.mongrel2.contrib.Request;
 
-import java.io.UnsupportedEncodingException;
+import java.net.HttpCookie;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class Mongrel2Request {
-    private static final byte SPACE = (byte) ' ';
-    private static final byte COLON = (byte) ':';
-    private static final String ASCII = "US-ASCII";
+public class Mongrel2Request implements HttpRequest {
+    private final Request request;
 
-    private final JSONObject headers;
-
-    public String header(String name) throws JSONException {
-        return headers.getString(name);
+    public Mongrel2Request(Request request) {
+        this.request = request;
     }
 
-    private enum STATE {
-        UUID,
-        ID,
-        PATH,
-        HEADERS
+    @Override
+    public String uri() {
+        return request.uri().toString();
     }
 
-    public final String uuid;
-    public final String id;
-    public final String path;
-
-    public Mongrel2Request(String uuid, String id, String path, String headers) throws JSONException {
-        this.uuid = uuid;
-        this.id = id;
-        this.path = path;
-        this.headers = new JSONObject(headers);
+    @Override
+    public HttpRequest uri(String uri) {
+        throw new UnsupportedOperationException();
     }
 
-    public static Mongrel2Request parse(byte[] bytes) throws UnsupportedEncodingException, JSONException {
-        STATE state = STATE.UUID;
-        int start = -1;
-        String uuid = null;
-        String id = null;
-        String path = null;
-        for (int i = 0; i < bytes.length; i++) {
-            if (state == STATE.UUID) {
-                if (bytes[i] == SPACE) {
-                    uuid = new String(bytes, 0, i);
-                    state = STATE.ID;
-                    start = i + 1;
-                }
-            } else if (state == STATE.ID) {
-                if (bytes[i] == SPACE) {
-                    id = new String(bytes, start, i - start, ASCII);
-                    state = STATE.PATH;
-                    start = i + 1;
-                }
-            } else if (state == STATE.PATH) {
-                if (bytes[i] == SPACE) {
-                    path = new String(bytes, start, i - start, ASCII);
-                    state = STATE.HEADERS;
-                    start = i + 1;
-                }
-            } else if (state == STATE.HEADERS) {
-                if (bytes[i] == COLON) {
-                    String len = new String(bytes, start, i - start, ASCII);
-                    int l = Integer.parseInt(len);
-                    start = i+1;
-                    String headers = new String(bytes, start, l, ASCII);
-                    return new Mongrel2Request(uuid, id, path, headers);
-                }
-            }
-        }
-        return null;
+    @Override
+    public String header(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<String> headers(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasHeader(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<HttpCookie> cookies() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public HttpCookie cookie(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String queryParam(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<String> queryParams(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<String> queryParamKeys() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String postParam(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<String> postParams(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<String> postParamKeys() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String cookieValue(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Map.Entry<String, String>> allHeaders() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String method() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String body() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<String, Object> data() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object data(String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public HttpRequest data(String key, Object value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<String> dataKeys() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SocketAddress remoteAddress() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Object id() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long timestamp() {
+        throw new UnsupportedOperationException();
     }
 }

@@ -152,13 +152,13 @@ public class NettyWebServer implements WebServer {
     }
 
     @Override
-    public WebServer uncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
+    public NettyWebServer uncaughtExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
         this.exceptionHandler = exceptionHandler;
         return this;
     }
 
     @Override
-    public WebServer connectionExceptionHandler(Thread.UncaughtExceptionHandler ioExceptionHandler) {
+    public NettyWebServer connectionExceptionHandler(Thread.UncaughtExceptionHandler ioExceptionHandler) {
         this.ioExceptionHandler = ioExceptionHandler;
         return this;
     }
