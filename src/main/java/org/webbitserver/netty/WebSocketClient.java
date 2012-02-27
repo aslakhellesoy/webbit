@@ -199,10 +199,10 @@ public class WebSocketClient implements WebSocket {
         request.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.UPGRADE);
         request.setHeader(HttpHeaders.Names.UPGRADE, "websocket");
         request.setHeader(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP);
-        request.setHeader(Hybi.SEC_WEBSOCKET_VERSION, VERSION);
-
-        base64Nonce = base64Nonce();
-        request.setHeader(Hybi.SEC_WEBSOCKET_KEY, base64Nonce);
+//        request.setHeader(Hybi.SEC_WEBSOCKET_VERSION, VERSION);
+//
+//        base64Nonce = base64Nonce();
+//        request.setHeader(Hybi.SEC_WEBSOCKET_KEY, base64Nonce);
         return request;
     }
 
@@ -258,9 +258,9 @@ public class WebSocketClient implements WebSocket {
         @Override
         public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
             HttpResponse response = (HttpResponse) e.getMessage();
-            String webSocketAccept = response.getHeader(Hybi.SEC_WEBSOCKET_ACCEPT);
-            verifySecWebSocketAccept(webSocketAccept);
-            adjustPipelineToWebSocket(ctx, e, HybiWebSocketFrameDecoder.clientSide(outboundMaskingKey), new HybiWebSocketFrameEncoder());
+//            String webSocketAccept = response.getHeader(Hybi.SEC_WEBSOCKET_ACCEPT);
+//            verifySecWebSocketAccept(webSocketAccept);
+//            adjustPipelineToWebSocket(ctx, e, HybiWebSocketFrameDecoder.clientSide(outboundMaskingKey), new HybiWebSocketFrameEncoder());
         }
 
         private void verifySecWebSocketAccept(String webSocketAccept) {
@@ -282,20 +282,20 @@ public class WebSocketClient implements WebSocket {
             final NettyWebSocketConnection webSocketConnection = new NettyWebSocketConnection(executor, httpRequest, ctx, outboundMaskingKey);
             webSocketConnection.setHybiWebSocketVersion(VERSION);
 
-            ChannelHandler webSocketChannelHandler = new WebSocketConnectionHandler(executor, exceptionHandler, ioExceptionHandler, webSocketConnection, webSocketHandler);
-
-            ChannelPipeline p = ctx.getChannel().getPipeline();
-            p.remove("inflater");
-            p.replace("decoder", "wsdecoder", webSocketFrameDecoder);
-            p.replace("encoder", "wsencoder", webSocketFrameEncoder);
-            p.replace("handshakeHandler", "wshandler", webSocketChannelHandler);
-
-            executor.execute(new CatchingRunnable(exceptionHandler) {
-                @Override
-                public void go() throws Throwable {
-                    webSocketHandler.onOpen(webSocketConnection);
-                }
-            });
+//            ChannelHandler webSocketChannelHandler = new WebSocketConnectionHandler(executor, exceptionHandler, ioExceptionHandler, webSocketConnection, webSocketHandler);
+//
+//            ChannelPipeline p = ctx.getChannel().getPipeline();
+//            p.remove("inflater");
+//            p.replace("decoder", "wsdecoder", webSocketFrameDecoder);
+//            p.replace("encoder", "wsencoder", webSocketFrameEncoder);
+//            p.replace("handshakeHandler", "wshandler", webSocketChannelHandler);
+//
+//            executor.execute(new CatchingRunnable(exceptionHandler) {
+//                @Override
+//                public void go() throws Throwable {
+//                    webSocketHandler.onOpen(webSocketConnection);
+//                }
+//            });
         }
 
         private long timestamp() {

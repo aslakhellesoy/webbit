@@ -52,7 +52,8 @@ public class NettyWebServer implements WebServer {
     private final Executor startStopExecutor = Executors.newSingleThreadExecutor();
     private final SocketAddress socketAddress;
     private final URI publicUri;
-    private final List<HttpHandler> handlers = new ArrayList<HttpHandler>();
+    private final List<HttpHandler> httpHandlers = new ArrayList<HttpHandler>();
+    private final List<WebSocketHandler> webSocketHandlers = new ArrayList<WebSocketHandler>();
     private final List<ExecutorService> executorServices = new ArrayList<ExecutorService>();
     private final Executor executor;
 
@@ -143,7 +144,7 @@ public class NettyWebServer implements WebServer {
 
     @Override
     public NettyWebServer add(HttpHandler handler) {
-        handlers.add(handler);
+        httpHandlers.add(handler);
         return this;
     }
 
@@ -154,6 +155,7 @@ public class NettyWebServer implements WebServer {
 
     @Override
     public NettyWebServer add(String path, WebSocketHandler handler) {
+        webSocketHandlers.add(handler);
         return add(path, new HttpToWebSocketHandler(handler));
     }
 
@@ -194,7 +196,7 @@ public class NettyWebServer implements WebServer {
                         pipeline.addLast("decompressor", new HttpContentDecompressor());
                         pipeline.addLast("encoder", new HttpResponseEncoder());
                         pipeline.addLast("compressor", new HttpContentCompressor());
-                        pipeline.addLast("handler", new NettyHttpChannelHandler(executor, handlers, id, timestamp, exceptionHandler, ioExceptionHandler));
+                        pipeline.addLast("handler", new NettyHttpChannelHandler(executor, httpHandlers, webSocketHandlers, id, timestamp, exceptionHandler, ioExceptionHandler));
                         return pipeline;
                     }
                 });

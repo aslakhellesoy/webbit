@@ -6,8 +6,11 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.webbitserver.HttpControl;
 import org.webbitserver.HttpHandler;
+import org.webbitserver.WebSocketHandler;
 import org.webbitserver.WebbitException;
 
 import java.util.List;
@@ -21,6 +24,7 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
 
     private final Executor executor;
     private final List<HttpHandler> httpHandlers;
+    private final List<WebSocketHandler> webSocketHandlers;
     private final Object id;
     private final long timestamp;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
@@ -29,12 +33,14 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
 
     public NettyHttpChannelHandler(Executor executor,
                                    List<HttpHandler> httpHandlers,
+                                   List<WebSocketHandler> webSocketHandlers,
                                    Object id,
                                    long timestamp,
                                    Thread.UncaughtExceptionHandler exceptionHandler,
                                    Thread.UncaughtExceptionHandler ioExceptionHandler) {
         this.executor = executor;
         this.httpHandlers = httpHandlers;
+        this.webSocketHandlers = webSocketHandlers;
         this.id = id;
         this.timestamp = timestamp;
         this.exceptionHandler = exceptionHandler;
@@ -50,10 +56,31 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, MessageEvent messageEvent) throws Exception {
-        if (messageEvent.getMessage() instanceof HttpRequest) {
-            handleHttpRequest(ctx, messageEvent, (HttpRequest) messageEvent.getMessage());
+        Object msg = messageEvent.getMessage();
+        if (msg instanceof HttpRequest) {
+            handleHttpRequest(ctx, messageEvent, (HttpRequest) msg);
+        } else if (msg instanceof WebSocketFrame) {
+            handleWebSocketFrame(ctx, messageEvent, (WebSocketFrame) msg);
         } else {
             super.messageReceived(ctx, messageEvent);
+        }
+    }
+
+    private void handleWebSocketFrame(ChannelHandlerContext ctx, MessageEvent messageEvent, final WebSocketFrame webSocketFrame) {
+        for (final WebSocketHandler webSocketHandler : webSocketHandlers) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    if(webSocketFrame instanceof TextWebSocketFrame) {
+                        TextWebSocketFrame frame = (TextWebSocketFrame) webSocketFrame;
+                        try {
+                            webSocketHandler.onMessage(null, frame.getText());
+                        } catch (Throwable throwable) {
+                            throwable.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                    }
+                }
+            });
         }
     }
 

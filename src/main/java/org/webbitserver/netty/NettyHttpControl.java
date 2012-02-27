@@ -1,10 +1,13 @@
 package org.webbitserver.netty;
 
-import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import org.webbitserver.EventSourceHandler;
 import org.webbitserver.HttpControl;
 import org.webbitserver.HttpHandler;
@@ -16,6 +19,7 @@ import org.webbitserver.WebbitException;
 
 import java.util.Iterator;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 public class NettyHttpControl implements HttpControl {
 
@@ -33,6 +37,7 @@ public class NettyHttpControl implements HttpControl {
     private HttpControl defaultControl;
     private NettyWebSocketConnection webSocketConnection;
     private NettyEventSourceConnection eventSourceConnection;
+    private WebSocketServerHandshaker handshaker;
 
     public NettyHttpControl(Iterator<HttpHandler> handlerIterator,
                             Executor executor,
@@ -85,17 +90,48 @@ public class NettyHttpControl implements HttpControl {
     }
 
     @Override
-    public WebSocketConnection upgradeToWebSocketConnection(WebSocketHandler webSocketHandler) {
-        NettyWebSocketConnection webSocketConnection = webSocketConnection();
-        WebSocketConnectionHandler webSocketConnectionHandler = new WebSocketConnectionHandler(executor, exceptionHandler, ioExceptionHandler, webSocketConnection, webSocketHandler);
-        performWebSocketHandshake(webSocketConnection, webSocketConnectionHandler);
+    public WebSocketConnection upgradeToWebSocketConnection(final WebSocketHandler webSocketHandler) {
+        final NettyWebSocketConnection webSocketConnection = webSocketConnection();
 
-        try {
-            webSocketHandler.onOpen(webSocketConnection);
-        } catch (Throwable e) {
-            exceptionHandler.uncaughtException(Thread.currentThread(), new WebbitException(e));
+        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(), null, false);
+        handshaker = wsFactory.newHandshaker(nettyHttpRequest);
+        if (handshaker == null) {
+            wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
+        } else {
+            final ChannelFuture handshake = handshaker.handshake(ctx.getChannel(), nettyHttpRequest);
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        boolean completedHandshake = handshake.await(3000, TimeUnit.MILLISECONDS);
+                        if (completedHandshake) {
+                            try {
+                                webSocketHandler.onOpen(webSocketConnection);
+                            } catch (Throwable e) {
+                                exceptionHandler.uncaughtException(Thread.currentThread(), new WebbitException(e));
+                            }
+                        } else {
+                            try {
+                                webSocketHandler.onClose(webSocketConnection);
+                            } catch (Throwable e) {
+                                exceptionHandler.uncaughtException(Thread.currentThread(), new WebbitException(e));
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        try {
+                            webSocketHandler.onClose(webSocketConnection);
+                        } catch (Throwable throwable) {
+                            exceptionHandler.uncaughtException(Thread.currentThread(), new WebbitException(e));
+                        }
+                    }
+                }
+            });
         }
         return webSocketConnection;
+    }
+
+    private String getWebSocketLocation() {
+        return "ws://" + nettyHttpRequest.getHeader(HttpHeaders.Names.HOST) + "/foooo";
     }
 
     @Override
@@ -155,41 +191,6 @@ public class NettyHttpControl implements HttpControl {
         staleConnectionTracker.stopTracking(ctx.getChannel());
         p.remove("aggregator");
         p.replace("handler", "ssehandler", eventSourceConnectionHandler);
-    }
-
-
-    private void performWebSocketHandshake(NettyWebSocketConnection webSocketConnection, ChannelHandler webSocketConnectionHandler) {
-        WebSocketVersion[] versions = new WebSocketVersion[]{
-                new Hybi(nettyHttpRequest, nettyHttpResponse),
-                new Hixie76(nettyHttpRequest, nettyHttpResponse),
-                new Hixie75(nettyHttpRequest, nettyHttpResponse)
-        };
-
-        Channel channel = ctx.getChannel();
-        ChannelPipeline pipeline = channel.getPipeline();
-
-        for (WebSocketVersion webSocketVersion : versions) {
-            if (webSocketVersion.matches()) {
-                ChannelHandler webSocketFrameDecoder = webSocketVersion.createDecoder();
-                getReadyToReceiveWebSocketMessages(webSocketFrameDecoder, webSocketConnectionHandler, pipeline, channel);
-                webSocketVersion.prepareHandshakeResponse(webSocketConnection);
-                channel.write(nettyHttpResponse);
-                getReadyToSendWebSocketMessages(webSocketVersion.createEncoder(), pipeline);
-                break;
-            }
-        }
-    }
-
-    private void getReadyToReceiveWebSocketMessages(ChannelHandler webSocketFrameDecoder, ChannelHandler webSocketConnectionHandler, ChannelPipeline p, Channel channel) {
-        StaleConnectionTrackingHandler staleConnectionTracker = (StaleConnectionTrackingHandler) p.remove("staleconnectiontracker");
-        staleConnectionTracker.stopTracking(channel);
-        p.remove("aggregator");
-        p.replace("decoder", "wsdecoder", webSocketFrameDecoder);
-        p.replace("handler", "wshandler", webSocketConnectionHandler);
-    }
-
-    private void getReadyToSendWebSocketMessages(ChannelHandler webSocketFrameEncoder, ChannelPipeline p) {
-        p.replace("encoder", "wsencoder", webSocketFrameEncoder);
     }
 
 }
