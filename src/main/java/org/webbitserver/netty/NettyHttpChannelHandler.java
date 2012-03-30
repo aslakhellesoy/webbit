@@ -71,12 +71,12 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    if(webSocketFrame instanceof TextWebSocketFrame) {
+                    if (webSocketFrame instanceof TextWebSocketFrame) {
                         TextWebSocketFrame frame = (TextWebSocketFrame) webSocketFrame;
                         try {
                             webSocketHandler.onMessage(null, frame.getText());
                         } catch (Throwable throwable) {
-                            throwable.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                            exceptionHandler.uncaughtException(Thread.currentThread(), throwable);
                         }
                     }
                 }

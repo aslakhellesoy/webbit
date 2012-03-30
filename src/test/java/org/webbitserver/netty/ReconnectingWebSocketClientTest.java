@@ -2,6 +2,7 @@ package org.webbitserver.netty;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.webbitserver.BaseWebSocketHandler;
 import org.webbitserver.WebSocket;
@@ -21,6 +22,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class ReconnectingWebSocketClientTest {
     private EchoWsServer server;
     private URI wsUri;
