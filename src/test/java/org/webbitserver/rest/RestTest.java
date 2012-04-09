@@ -9,6 +9,7 @@ import org.webbitserver.HttpResponse;
 import org.webbitserver.WebServer;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.webbitserver.WebServers.createWebServer;
@@ -23,8 +24,8 @@ public class RestTest {
     private Rest rest = new Rest(webServer);
 
     @After
-    public void die() throws IOException, InterruptedException {
-        webServer.stop().join();
+    public void die() throws IOException, InterruptedException, ExecutionException {
+        webServer.stop().get();
     }
 
     @Test
