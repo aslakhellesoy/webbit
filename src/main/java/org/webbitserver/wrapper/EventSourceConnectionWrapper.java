@@ -2,7 +2,6 @@ package org.webbitserver.wrapper;
 
 import org.webbitserver.EventSourceConnection;
 import org.webbitserver.HttpRequest;
-import org.webbitserver.netty.contrib.EventSourceMessage;
 
 import java.util.Map;
 import java.util.Set;
@@ -40,13 +39,7 @@ public class EventSourceConnectionWrapper implements EventSourceConnection {
     }
 
     @Override
-    public EventSourceConnectionWrapper send(EventSourceMessage message) {
-        connection.send(message);
-        return this;
-    }
-
-    @Override
-    public EventSourceConnectionWrapper send(String message) {
+    public EventSourceConnectionWrapper send(org.webbitserver.EventSourceMessage message) {
         connection.send(message);
         return this;
     }

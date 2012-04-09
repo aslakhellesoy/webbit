@@ -5,6 +5,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.util.CharsetUtil;
@@ -29,21 +30,17 @@ public class NettyHttpResponse implements org.webbitserver.HttpResponse {
     private final HttpResponse response;
     private final boolean isKeepAlive;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
-    private final Thread.UncaughtExceptionHandler ioExceptionHandler;
     private final ChannelBuffer responseBuffer;
     private Charset charset;
 
     public NettyHttpResponse(ChannelHandlerContext ctx,
                              HttpResponse response,
                              boolean isKeepAlive,
-                             Thread.UncaughtExceptionHandler exceptionHandler,
-                             Thread.UncaughtExceptionHandler ioExceptionHandler)
-    {
+                             Thread.UncaughtExceptionHandler exceptionHandler) {
         this.ctx = ctx;
         this.response = response;
         this.isKeepAlive = isKeepAlive;
         this.exceptionHandler = exceptionHandler;
-        this.ioExceptionHandler = ioExceptionHandler;
         this.charset = DEFAULT_CHARSET;
         responseBuffer = ChannelBuffers.dynamicBuffer();
     }
@@ -99,7 +96,7 @@ public class NettyHttpResponse implements org.webbitserver.HttpResponse {
 
     @Override
     public NettyHttpResponse cookie(HttpCookie httpCookie) {
-        return header(SET_COOKIE_HEADER, httpCookie.toString());
+        return header(HttpHeaders.Names.SET_COOKIE, httpCookie.toString());
     }
 
     @Override
@@ -137,7 +134,7 @@ public class NettyHttpResponse implements org.webbitserver.HttpResponse {
         flushResponse();
 
         exceptionHandler.uncaughtException(Thread.currentThread(),
-                                           WebbitException.fromException(error, ctx.getChannel()));
+                WebbitException.fromException(error, ctx.getChannel()));
 
         return this;
     }
@@ -167,7 +164,7 @@ public class NettyHttpResponse implements org.webbitserver.HttpResponse {
             }
         } catch (Exception e) {
             exceptionHandler.uncaughtException(Thread.currentThread(),
-                                               WebbitException.fromException(e, ctx.getChannel()));
+                    WebbitException.fromException(e, ctx.getChannel()));
         }
     }
 

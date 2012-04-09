@@ -1,14 +1,18 @@
 package org.webbitserver.stub;
 
 import org.webbitserver.HttpRequest;
-import org.webbitserver.InboundCookieParser;
+import org.webbitserver.helpers.InboundCookieParser;
 import org.webbitserver.helpers.QueryParameters;
 
 import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of HttpRequest that is easy to construct manually and populate.

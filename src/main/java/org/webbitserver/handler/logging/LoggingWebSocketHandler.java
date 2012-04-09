@@ -16,13 +16,13 @@ class LoggingWebSocketHandler implements WebSocketHandler {
     }
 
     @Override
-    public void onOpen(WebSocketConnection connection) throws Exception {
+    public void onOpen(WebSocketConnection connection) throws Throwable {
         logSink.webSocketConnectionOpen(connection);
         handler.onOpen(loggingConnection);
     }
 
     @Override
-    public void onClose(WebSocketConnection connection) throws Exception {
+    public void onClose(WebSocketConnection connection) throws Throwable {
         logSink.webSocketConnectionClose(connection);
         logSink.httpEnd(connection.httpRequest());
         handler.onClose(loggingConnection);
@@ -41,7 +41,13 @@ class LoggingWebSocketHandler implements WebSocketHandler {
     }
 
     @Override
-    public void onPong(WebSocketConnection connection, String message) throws Throwable {
+    public void onPing(WebSocketConnection connection, byte[] message) throws Throwable {
+        logSink.webSocketInboundPing(connection, message);
+        handler.onPing(loggingConnection, message);
+    }
+
+    @Override
+    public void onPong(WebSocketConnection connection, byte[] message) throws Throwable {
         logSink.webSocketInboundPong(connection, message);
         handler.onPong(loggingConnection, message);
     }

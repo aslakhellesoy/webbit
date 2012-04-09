@@ -3,7 +3,6 @@ package org.webbitserver.stub;
 import org.webbitserver.EventSourceConnection;
 import org.webbitserver.HttpRequest;
 import org.webbitserver.WebSocketConnection;
-import org.webbitserver.netty.contrib.EventSourceMessage;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +16,8 @@ public class StubConnection extends StubDataHolder implements EventSourceConnect
 
     private final List<String> sentMessages = new LinkedList<String>();
     private final List<byte[]> sentBinaryMessages = new LinkedList<byte[]>();
-    private final List<String> sentPings = new LinkedList<String>();
+    private final List<byte[]> sentPings = new LinkedList<byte[]>();
+    private final List<byte[]> sentPongs = new LinkedList<byte[]>();
     private boolean closed = false;
     private HttpRequest httpRequest;
     private String version = null;
@@ -36,8 +36,8 @@ public class StubConnection extends StubDataHolder implements EventSourceConnect
     }
 
     @Override
-    public StubConnection send(EventSourceMessage message) {
-        return send(message.build()).send("\n");
+    public StubConnection send(org.webbitserver.EventSourceMessage message) {
+        return send(message.build());
     }
 
     public StubConnection httpRequest(HttpRequest httpRequest) {
@@ -53,13 +53,26 @@ public class StubConnection extends StubDataHolder implements EventSourceConnect
 
     @Override
     public StubConnection send(byte[] message) {
-        sentBinaryMessages.add(message);
+        return send(message, 0, message.length);
+    }
+
+    @Override
+    public StubConnection send(byte[] message, int offset, int length) {
+        byte[] subMessage = new byte[length];
+        System.arraycopy(message, offset, subMessage, 0, length);
+        sentBinaryMessages.add(subMessage);
         return this;
     }
 
     @Override
-    public StubConnection ping(String message) {
+    public StubConnection ping(byte[] message) {
         sentPings.add(message);
+        return this;
+    }
+
+    @Override
+    public StubConnection pong(byte[] message) {
+        sentPongs.add(message);
         return this;
     }
 
@@ -81,8 +94,12 @@ public class StubConnection extends StubDataHolder implements EventSourceConnect
         return sentBinaryMessages;
     }
 
-    public List<String> sentPings() {
+    public List<byte[]> sentPings() {
         return sentPings;
+    }
+
+    public List<byte[]> sentPongs() {
+        return sentPongs;
     }
 
     @Override

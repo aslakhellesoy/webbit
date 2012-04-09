@@ -1,4 +1,4 @@
-package org.webbitserver.netty.contrib;
+package org.webbitserver;
 
 import java.util.regex.Pattern;
 
@@ -9,9 +9,8 @@ public class EventSourceMessage {
     private static final String ID = "id";
     private static final String EVENT = "event";
     private static final String RETRY = "retry";
-
     private static final String LF = "\n";
-    private StringBuilder payload = new StringBuilder();
+    private final StringBuilder payload = new StringBuilder();
 
     public EventSourceMessage() {
     }
@@ -22,12 +21,12 @@ public class EventSourceMessage {
     }
 
     public EventSourceMessage data(String data) {
-        prependOnAllLines(DATA, data);
+        prependOnAllLines(EventSourceMessage.DATA, data);
         return this;
     }
 
     public EventSourceMessage comment(String data) {
-        prependOnAllLines(COLON, data);
+        prependOnAllLines(EventSourceMessage.COLON, data);
         return this;
     }
 
@@ -36,35 +35,35 @@ public class EventSourceMessage {
     }
 
     public EventSourceMessage id(String id) {
-        appendFieldValue(ID, id);
+        appendFieldValue(EventSourceMessage.ID, id);
         return this;
     }
 
     public EventSourceMessage event(String event) {
-        appendFieldValue(EVENT, event);
+        appendFieldValue(EventSourceMessage.EVENT, event);
         return this;
     }
 
     public EventSourceMessage retry(Long reconnectionTimeMillis) {
-        appendFieldValue(RETRY, reconnectionTimeMillis.toString());
+        appendFieldValue(EventSourceMessage.RETRY, reconnectionTimeMillis.toString());
         return this;
     }
 
     public String build() {
-        return payload.toString();
+        return payload.toString() + "\n";
     }
 
     private void appendFieldValue(String field, String value) {
         payload.append(field);
         if (value != null && !value.isEmpty()) {
-            payload.append(COLON);
+            payload.append(EventSourceMessage.COLON);
             payload.append(value);
         }
-        payload.append(LF);
+        payload.append(EventSourceMessage.LF);
     }
 
     private void prependOnAllLines(String field, String value) {
-        String multilineField = START.matcher(value).replaceAll(field);
-        payload.append(multilineField).append(LF);
+        String multilineField = EventSourceMessage.START.matcher(value).replaceAll(field);
+        payload.append(multilineField).append(EventSourceMessage.LF);
     }
 }

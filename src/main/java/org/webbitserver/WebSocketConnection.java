@@ -1,13 +1,10 @@
 package org.webbitserver;
 
-import java.util.concurrent.Executor;
-
-public interface WebSocketConnection extends Executor, DataHolder {
-    HttpRequest httpRequest();
+public interface WebSocketConnection extends HttpConnection {
 
     /**
      * Sends a text frame
-     * 
+     *
      * @param message frame payload
      * @return this
      */
@@ -15,26 +12,48 @@ public interface WebSocketConnection extends Executor, DataHolder {
 
     /**
      * Sends a binary frame
-     * 
+     *
      * @param message frame payload
      * @return this
      */
     WebSocketConnection send(byte[] message);
 
     /**
+     * Sends a binary frame
+     *
+     * @param message frame payload
+     * @param offset  The offset within the array of the first byte to be written; must be non-negative and no larger than <code>message.length</code>
+     * @param length  The maximum number of bytes to be written to the given array; must be non-negative and no larger than <code>message.length - offset</code>
+     * @return this
+     */
+    WebSocketConnection send(byte[] message, int offset, int length);
+
+    /**
      * Sends a ping frame
-     * 
+     *
      * @param message the payload of the ping
      * @return this
      */
-    WebSocketConnection ping(String message);
+    WebSocketConnection ping(byte[] message);
 
+    /**
+     * Sends a pong frame
+     *
+     * @param message the payload of the ping
+     * @return this
+     */
+    WebSocketConnection pong(byte[] message);
+
+    /**
+     * @return the WebSocket protocol version
+     */
+    String version();
+
+    // Override methods to provide more specific return type.
+
+    @Override
     WebSocketConnection close();
 
     @Override
-    WebSocketConnection data(String key, Object value); // Override DataHolder to provide more specific return type.
-
-    Executor handlerExecutor();
-
-    String version();
+    WebSocketConnection data(String key, Object value);
 }
