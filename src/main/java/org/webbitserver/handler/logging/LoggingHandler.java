@@ -53,9 +53,9 @@ public class LoggingHandler implements HttpHandler {
             }
 
             @Override
-            public WebSocketConnection upgradeToWebSocketConnection(WebSocketHandler handler) {
+            public WebSocketConnection performWebSocketHandshake(WebSocketHandler handler) {
                 loggingWebSocketConnection = new LoggingWebSocketConnection(logSink, super.webSocketConnection());
-                return super.upgradeToWebSocketConnection(new LoggingWebSocketHandler(logSink, loggingWebSocketConnection, handler));
+                return super.performWebSocketHandshake(new LoggingWebSocketHandler(logSink, loggingWebSocketConnection, handler));
             }
 
             @Override

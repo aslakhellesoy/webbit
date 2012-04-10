@@ -14,7 +14,7 @@ public class NettyWebSocketConnection extends AbstractHttpConnection implements 
 
     private String version;
 
-    public NettyWebSocketConnection(Executor executor, NettyHttpRequest nettyHttpRequest, ChannelHandlerContext ctx, byte[] outboundMaskingKey) {
+    public NettyWebSocketConnection(Executor executor, NettyHttpRequest nettyHttpRequest, ChannelHandlerContext ctx) {
         super(ctx, nettyHttpRequest, executor);
     }
 

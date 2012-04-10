@@ -10,10 +10,13 @@ import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.jboss.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.webbitserver.HttpControl;
 import org.webbitserver.HttpHandler;
+import org.webbitserver.WebSocketConnection;
 import org.webbitserver.WebSocketHandler;
 import org.webbitserver.WebbitException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
@@ -30,6 +33,7 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
     private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final Thread.UncaughtExceptionHandler ioExceptionHandler;
     private final ConnectionHelper connectionHelper;
+    private final Map<ChannelHandlerContext,NettyWebSocketConnection> connections = new HashMap<ChannelHandlerContext, NettyWebSocketConnection>();
 
     public NettyHttpChannelHandler(Executor executor,
                                    List<HttpHandler> httpHandlers,
@@ -60,13 +64,14 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
         if (msg instanceof HttpRequest) {
             handleHttpRequest(ctx, messageEvent, (HttpRequest) msg);
         } else if (msg instanceof WebSocketFrame) {
-            handleWebSocketFrame(ctx, messageEvent, (WebSocketFrame) msg);
+            handleWebSocketFrame(ctx, (WebSocketFrame) msg);
         } else {
             super.messageReceived(ctx, messageEvent);
         }
     }
 
-    private void handleWebSocketFrame(ChannelHandlerContext ctx, MessageEvent messageEvent, final WebSocketFrame webSocketFrame) {
+    private void handleWebSocketFrame(ChannelHandlerContext ctx, final WebSocketFrame webSocketFrame) {
+        final NettyWebSocketConnection webSocketConnection = connections.get(ctx);
         for (final WebSocketHandler webSocketHandler : webSocketHandlers) {
             executor.execute(new Runnable() {
                 @Override
@@ -74,7 +79,7 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
                     if (webSocketFrame instanceof TextWebSocketFrame) {
                         TextWebSocketFrame frame = (TextWebSocketFrame) webSocketFrame;
                         try {
-                            webSocketHandler.onMessage(null, frame.getText());
+                            webSocketHandler.onMessage(webSocketConnection, frame.getText());
                         } catch (Throwable throwable) {
                             exceptionHandler.uncaughtException(Thread.currentThread(), throwable);
                         }
@@ -85,12 +90,30 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
     }
 
     private void handleHttpRequest(final ChannelHandlerContext ctx, MessageEvent messageEvent, HttpRequest httpRequest) {
-        final NettyHttpRequest nettyHttpRequest = new NettyHttpRequest(messageEvent, httpRequest, id, timestamp);
+        final NettyHttpRequest nettyHttpRequest = new NettyHttpRequest(
+                messageEvent,
+                httpRequest,
+                id,
+                timestamp
+        );
         final NettyHttpResponse nettyHttpResponse = new NettyHttpResponse(
-                ctx, new DefaultHttpResponse(HTTP_1_1, OK), isKeepAlive(httpRequest), exceptionHandler);
-        final HttpControl control = new NettyHttpControl(httpHandlers.iterator(), executor, ctx,
-                nettyHttpRequest, nettyHttpResponse, httpRequest, new DefaultHttpResponse(HTTP_1_1, OK),
-                exceptionHandler, ioExceptionHandler);
+                ctx,
+                new DefaultHttpResponse(HTTP_1_1, OK),
+                isKeepAlive(httpRequest),
+                exceptionHandler
+        );
+        final HttpControl control = new NettyHttpControl(
+                httpHandlers.iterator(),
+                executor,
+                ctx,
+                nettyHttpRequest,
+                nettyHttpResponse,
+                httpRequest,
+                new DefaultHttpResponse(HTTP_1_1, OK),
+                exceptionHandler,
+                ioExceptionHandler,
+                this
+        );
 
         executor.execute(new Runnable() {
             @Override
@@ -109,4 +132,7 @@ public class NettyHttpChannelHandler extends SimpleChannelUpstreamHandler {
         connectionHelper.fireConnectionException(e);
     }
 
+    public void registerWebSocketConnection(ChannelHandlerContext ctx, NettyWebSocketConnection webSocketConnection) {
+        connections.put(ctx, webSocketConnection);
+    }
 }

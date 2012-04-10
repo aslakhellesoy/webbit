@@ -31,13 +31,13 @@ public class NettyHttpControl implements HttpControl {
     private final org.jboss.netty.handler.codec.http.HttpResponse nettyHttpResponse;
     private final Thread.UncaughtExceptionHandler exceptionHandler;
     private final Thread.UncaughtExceptionHandler ioExceptionHandler;
+    private final NettyHttpChannelHandler nettyHttpChannelHandler;
 
     private HttpRequest defaultRequest;
     private HttpResponse webbitHttpResponse;
     private HttpControl defaultControl;
     private NettyWebSocketConnection webSocketConnection;
     private NettyEventSourceConnection eventSourceConnection;
-    private WebSocketServerHandshaker handshaker;
 
     public NettyHttpControl(Iterator<HttpHandler> handlerIterator,
                             Executor executor,
@@ -47,7 +47,9 @@ public class NettyHttpControl implements HttpControl {
                             org.jboss.netty.handler.codec.http.HttpRequest nettyHttpRequest,
                             org.jboss.netty.handler.codec.http.HttpResponse nettyHttpResponse,
                             Thread.UncaughtExceptionHandler exceptionHandler,
-                            Thread.UncaughtExceptionHandler ioExceptionHandler) {
+                            Thread.UncaughtExceptionHandler ioExceptionHandler,
+                            NettyHttpChannelHandler nettyHttpChannelHandler
+    ) {
         this.handlerIterator = handlerIterator;
         this.executor = executor;
         this.ctx = ctx;
@@ -59,6 +61,7 @@ public class NettyHttpControl implements HttpControl {
         this.exceptionHandler = exceptionHandler;
 
         defaultRequest = webbitHttpRequest;
+        this.nettyHttpChannelHandler = nettyHttpChannelHandler;
         defaultControl = this;
     }
 
@@ -90,11 +93,11 @@ public class NettyHttpControl implements HttpControl {
     }
 
     @Override
-    public WebSocketConnection upgradeToWebSocketConnection(final WebSocketHandler webSocketHandler) {
+    public WebSocketConnection performWebSocketHandshake(final WebSocketHandler webSocketHandler) {
         final NettyWebSocketConnection webSocketConnection = webSocketConnection();
 
         WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(getWebSocketLocation(), null, false);
-        handshaker = wsFactory.newHandshaker(nettyHttpRequest);
+        WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(nettyHttpRequest);
         if (handshaker == null) {
             wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
         } else {
@@ -106,6 +109,7 @@ public class NettyHttpControl implements HttpControl {
                         boolean completedHandshake = handshake.await(3000, TimeUnit.MILLISECONDS);
                         if (completedHandshake) {
                             try {
+                                nettyHttpChannelHandler.registerWebSocketConnection(ctx, webSocketConnection);
                                 webSocketHandler.onOpen(webSocketConnection);
                             } catch (Throwable e) {
                                 exceptionHandler.uncaughtException(Thread.currentThread(), new WebbitException(e));
@@ -137,7 +141,7 @@ public class NettyHttpControl implements HttpControl {
     @Override
     public NettyWebSocketConnection webSocketConnection() {
         if (webSocketConnection == null) {
-            webSocketConnection = new NettyWebSocketConnection(executor, webbitHttpRequest, ctx, null);
+            webSocketConnection = new NettyWebSocketConnection(executor, webbitHttpRequest, ctx);
         }
         return webSocketConnection;
     }

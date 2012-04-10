@@ -69,7 +69,7 @@ public class StubHttpControl implements HttpControl {
     }
 
     @Override
-    public WebSocketConnection upgradeToWebSocketConnection(WebSocketHandler handler) {
+    public WebSocketConnection performWebSocketHandshake(WebSocketHandler handler) {
         this.webSocketHandler = handler;
         return this.webSocketConnection;
     }

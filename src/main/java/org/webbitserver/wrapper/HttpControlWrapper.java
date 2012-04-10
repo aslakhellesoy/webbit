@@ -52,8 +52,8 @@ public class HttpControlWrapper implements HttpControl {
     }
 
     @Override
-    public WebSocketConnection upgradeToWebSocketConnection(WebSocketHandler handler) {
-        return control.upgradeToWebSocketConnection(handler);
+    public WebSocketConnection performWebSocketHandshake(WebSocketHandler handler) {
+        return control.performWebSocketHandshake(handler);
     }
 
     @Override

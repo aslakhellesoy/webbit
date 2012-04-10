@@ -10,7 +10,7 @@ public interface HttpControl extends Executor {
 
     void nextHandler(HttpRequest request, HttpResponse response, HttpControl control);
 
-    WebSocketConnection upgradeToWebSocketConnection(WebSocketHandler handler);
+    WebSocketConnection performWebSocketHandshake(WebSocketHandler handler);
 
     WebSocketConnection webSocketConnection();
 
